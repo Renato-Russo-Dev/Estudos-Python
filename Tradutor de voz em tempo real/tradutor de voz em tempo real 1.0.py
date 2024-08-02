@@ -7,27 +7,19 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 
 def wait_for_user():
-    """
-    Função para pausar e esperar o usuário pressionar Enter para continuar.
-    """
     input("Pressione Enter para continuar com outra tradução...")
 
 def main():
-    # Inicializando o reconhecedor de fala, tradutor e engine de texto para fala
     recognizer = sr.Recognizer()
     translator = Translator()
     engine = pyttsx3.init()
 
-    # Função para converter texto para fala
     def speak(text):
         engine.say(text)
         engine.runAndWait()
-
-    # Função para traduzir texto
     def translate_text(text):
         return translator.translate(text, src='pt', dest='en').text
 
-    # Função para reconhecer fala
     def recognize_speech(source):
         try:
             # Informar ao usuário sobre o tempo limite
@@ -45,10 +37,8 @@ def main():
             print(f"Erro ao reconhecer fala: {e}", file=sys.stderr)
             return None
 
-    # Inicializando o microfone
     mic = sr.Microphone()
-
-    # Verificando as configurações do microfone
+	
     try:
         with mic as source:
             recognizer.adjust_for_ambient_noise(source)
@@ -63,11 +53,10 @@ def main():
     try:
         while True:
             try:
-                # Usando o Microphone como contexto
+        
                 with mic as source:
                     recognizer.adjust_for_ambient_noise(source)
 
-                    # Usando o ThreadPoolExecutor para realizar o reconhecimento de fala em paralelo
                     future_audio = executor.submit(recognize_speech, source)
                     audio_data = future_audio.result()  # Bloqueia até o reconhecimento ser concluído
 
@@ -79,20 +68,18 @@ def main():
 
                             # Usando ThreadPoolExecutor para realizar a tradução em paralelo
                             future_translation = executor.submit(translate_text, text)
-                            translated_text = future_translation.result()  # Bloqueia até a tradução ser concluída
+                            translated_text = future_translation.result() 
 
                             print(f"Texto traduzido: {translated_text}")
-
-                            # Convertendo o texto traduzido para fala
                             speak(translated_text)
-
-                            # Pausar e esperar o usuário pressionar Enter para continuar
+							
                             wait_for_user()
 
                         except sr.UnknownValueError:
                             print("Não consegui entender o áudio")
                         except sr.RequestError:
                             print("Não consegui conectar ao serviço de reconhecimento de fala")
+							
 
             except Exception as e:
                 print(f"Erro ao processar áudio: {e}", file=sys.stderr)
