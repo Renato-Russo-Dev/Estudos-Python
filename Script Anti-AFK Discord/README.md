@@ -1,0 +1,1 @@
+Um script pra ser usado no discord para a evitar que a pessoa caia em AFK do servidor.
