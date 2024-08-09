@@ -17,17 +17,14 @@ def main():
     def speak(text):
         engine.say(text)
         engine.runAndWait()
+        
     def translate_text(text):
         return translator.translate(text, src='pt', dest='en').text
 
     def recognize_speech(source):
         try:
-            # Informar ao usuário sobre o tempo limite
             print("\nFale agora. Estou lhe escutando. Você tem quinze segundos para falar.")
-            
-            # Captura o áudio
-            audio_data = recognizer.listen(source, timeout=15)  # Tempo limite ajustado para quinze segundos
-            
+            audio_data = recognizer.listen(source, timeout=15)
             print("Voz escutada.")
             return audio_data
         except sr.WaitTimeoutError:
@@ -47,46 +44,33 @@ def main():
         print(f"Erro ao inicializar o microfone: {e}", file=sys.stderr)
         return
 
-    # Inicializando o ThreadPoolExecutor com até quatro threads
     executor = ThreadPoolExecutor(max_workers=4)
 
     try:
         while True:
             try:
-        
                 with mic as source:
                     recognizer.adjust_for_ambient_noise(source)
-
                     future_audio = executor.submit(recognize_speech, source)
-                    audio_data = future_audio.result()  # Bloqueia até o reconhecimento ser concluído
+                    audio_data = future_audio.result()
 
                     if audio_data:
-                        # Usando o reconhecimento de fala
                         try:
                             text = recognizer.recognize_google(audio_data, language='pt-BR')
                             print(f"Texto detectado: {text}")
-
-                            # Usando ThreadPoolExecutor para realizar a tradução em paralelo
                             future_translation = executor.submit(translate_text, text)
-                            translated_text = future_translation.result() 
-
+                            translated_text = future_translation.result()
                             print(f"Texto traduzido: {translated_text}")
                             speak(translated_text)
-							
                             wait_for_user()
-
                         except sr.UnknownValueError:
                             print("Não consegui entender o áudio")
                         except sr.RequestError:
                             print("Não consegui conectar ao serviço de reconhecimento de fala")
-							
-
             except Exception as e:
                 print(f"Erro ao processar áudio: {e}", file=sys.stderr)
-
     except KeyboardInterrupt:
         print("Programa interrompido pelo usuário")
-
     except Exception as e:
         print(f"Erro inesperado: {e}", file=sys.stderr)
 
